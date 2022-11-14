@@ -1,11 +1,11 @@
 #!/bin/bash
 export CUDA_VISIBLE_DEVICES=0
 
-PATH_TO_DATA=/h/xinji/projects/GLUE
+PATH_TO_DATA=/home/marina/REPOS/data/glue_data
 
 MODEL_TYPE=bert  # bert or roberta
 MODEL_SIZE=base  # base or large
-DATASET=MRPC  # SST-2, MRPC, RTE, QNLI, QQP, or MNLI
+DATASET=CoLA  # SST-2, MRPC, RTE, QNLI, QQP, or MNLI
 
 MODEL_NAME=${MODEL_TYPE}-${MODEL_SIZE}
 EPOCHS=10
@@ -34,5 +34,4 @@ python -um examples.run_highway_glue \
   --output_dir ./saved_models/${MODEL_TYPE}-${MODEL_SIZE}/$DATASET/two_stage \
   --plot_data_dir ./plotting/ \
   --save_steps 0 \
-  --overwrite_cache \
-  --eval_after_first_stage
+  --overwrite_cache

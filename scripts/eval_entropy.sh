@@ -1,11 +1,11 @@
 #!/bin/bash
 export CUDA_VISIBLE_DEVICES=0
 
-PATH_TO_DATA=/h/xinji/projects/GLUE
+PATH_TO_DATA=/home/marina/REPOS/data/glue_data
 
 MODEL_TYPE=bert  # bert or roberta
 MODEL_SIZE=base  # base or large
-DATASET=MRPC  # SST-2, MRPC, RTE, QNLI, QQP, or MNLI
+DATASET=RTE  # SST-2, MRPC, RTE, QNLI, QQP, or MNLI
 
 MODEL_NAME=${MODEL_TYPE}-${MODEL_SIZE}
 if [ $MODEL_TYPE = 'bert' ]
