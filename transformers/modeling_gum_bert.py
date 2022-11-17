@@ -105,7 +105,6 @@ class GumBertModel(BertModel):
         super(GumBertModel, self).__init__(config)
         self.encoder = GumBertEncoder(config)
 
-        self.init_weights()
 
     def forward(self, input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None,
                 head_mask=None, inputs_embeds=None, encoder_hidden_states=None, encoder_attention_mask=None,
@@ -206,7 +205,8 @@ class GumBertForSequenceClassification(BertForSequenceClassification):
 
     def forward(self, input_ids=None, attention_mask=None, token_type_ids=None,
                 position_ids=None, head_mask=None, inputs_embeds=None, labels=None,
-                do_pretrain_controller_train=False, do_controller_train=False, target_compute=1.0):
+                do_pretrain_controller_train=False, do_controller_train=False, 
+                do_pretrain_model=False, target_compute=1.0):
         
         if do_pretrain_controller_train and do_controller_train:
             assert("Both do_controller_train and do_pretrain_controller_train are set True, choose where you stand and rerun")
@@ -217,6 +217,9 @@ class GumBertForSequenceClassification(BertForSequenceClassification):
         elif do_pretrain_controller_train:
             hard_gumbel = False
             adaptive = True
+        elif do_pretrain_model:
+            hard_gumbel = False
+            adaptive = False
         else:
             # Eval
             hard_gumbel = True
@@ -254,7 +257,7 @@ class GumBertForSequenceClassification(BertForSequenceClassification):
                 loss_fct = CrossEntropyLoss()
                 loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
             
-            if self.training:
+            if not do_pretrain_model and self.training:
                 num_activated_layers = torch.sum(num_activated_layers, dim=-1)/self.bert.config.num_hidden_layers
                 loss2_fct = MSELoss()
                 loss2 = loss2_fct(num_activated_layers, target_compute*torch.ones_like(num_activated_layers))
