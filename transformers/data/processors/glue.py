@@ -20,11 +20,17 @@ import os
 
 from .utils import DataProcessor, InputExample, InputFeatures
 from ...file_utils import is_tf_available
+import textacy
+import spacy
+from textacy import extract, text_stats
+
 
 if is_tf_available():
     import tensorflow as tf
 
 logger = logging.getLogger(__name__)
+en = textacy.load_spacy_lang("en_core_web_sm", disable=("parser",))
+textacy.logger.setLevel(logging.ERROR)
 
 
 def glue_convert_examples_to_features(examples, tokenizer,
@@ -123,29 +129,43 @@ def glue_convert_examples_to_features(examples, tokenizer,
             logger.info("attention_mask: %s" % " ".join([str(x) for x in attention_mask]))
             logger.info("token_type_ids: %s" % " ".join([str(x) for x in token_type_ids]))
             logger.info("label: %s (id = %d)" % (example.label, label))
+        doc =  textacy.make_spacy_doc(example.text_a + example.text_b, lang=en)
+        stats = [
+                text_stats.readability.automated_readability_index(doc),
+                text_stats.readability.coleman_liau_index(doc),
+                text_stats.readability.flesch_reading_ease(doc),
+                text_stats.readability.lix(doc),
+                text_stats.basics.entropy(doc)
+        ]
+  
+
 
         features.append(
                 InputFeatures(input_ids=input_ids,
                               attention_mask=attention_mask,
                               token_type_ids=token_type_ids,
-                              label=label))
+                              label=label,
+                              metrics=stats))
 
     if is_tf_available() and is_tf_dataset:
         def gen():
             for ex in features:
                 yield  ({'input_ids': ex.input_ids,
                          'attention_mask': ex.attention_mask,
-                         'token_type_ids': ex.token_type_ids},
+                         'token_type_ids': ex.token_type_ids,
+                         'metrics': ex.metrics},
                         ex.label)
 
         return tf.data.Dataset.from_generator(gen,
             ({'input_ids': tf.int32,
               'attention_mask': tf.int32,
-              'token_type_ids': tf.int32},
+              'token_type_ids': tf.int32,
+              'metrics': tf.float32},
              tf.int64),
             ({'input_ids': tf.TensorShape([None]),
               'attention_mask': tf.TensorShape([None]),
-              'token_type_ids': tf.TensorShape([None])},
+              'token_type_ids': tf.TensorShape([None]),
+              'metrics': tf.TensorShape([None])},
              tf.TensorShape([])))
 
     return features

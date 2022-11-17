@@ -160,7 +160,9 @@ def train(args, train_dataset, model, tokenizer, do_pretrain_controller_train=Fa
         
             if args.model_type != 'distilbert':
                 inputs['token_type_ids'] = batch[2] if args.model_type in ['bert', 'xlnet'] else None  # XLM, DistilBERT and RoBERTa don't use segment_ids
-            
+            if args.do_augmented:
+                inputs['metrics'] = batch[4]
+
             outputs = model(**inputs)
 
             loss1 = outputs[0]  # model outputs are always tuple in transformers (see doc)
@@ -168,7 +170,7 @@ def train(args, train_dataset, model, tokenizer, do_pretrain_controller_train=Fa
             loss2 = 0
             
             if args.do_controller_train:
-                loss2 = outputs[1]*args.efficiency_weight
+                loss2 = outputs[1] * args.efficiency_weight
                 loss = loss1 + loss2
 
             if args.n_gpu > 1:
@@ -267,6 +269,9 @@ def evaluate(args, model, tokenizer, prefix=""):
                           'labels':         batch[3]}
                 if args.model_type != 'distilbert':
                     inputs['token_type_ids'] = batch[2] if args.model_type in ['bert', 'xlnet'] else None  # XLM, DistilBERT and RoBERTa don't use segment_ids
+                if args.do_augmented:
+                    inputs['metrics'] = batch[4]
+
                 outputs = model(**inputs)
                 tmp_eval_loss, num_executed_layers, logits = outputs[:3]
                 total_executed_layers += num_executed_layers.item()
@@ -342,12 +347,13 @@ def load_and_cache_examples(args, task, tokenizer, evaluate=False):
     all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
     all_attention_mask = torch.tensor([f.attention_mask for f in features], dtype=torch.long)
     all_token_type_ids = torch.tensor([f.token_type_ids for f in features], dtype=torch.long)
+    all_metrics = torch.tensor([f.metrics for f in features], dtype=torch.float32)
     if output_mode == "classification":
         all_labels = torch.tensor([f.label for f in features], dtype=torch.long)
     elif output_mode == "regression":
         all_labels = torch.tensor([f.label for f in features], dtype=torch.float)
 
-    dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels)
+    dataset = TensorDataset(all_input_ids, all_attention_mask, all_token_type_ids, all_labels, all_metrics)
     return dataset
 
 
@@ -390,6 +396,8 @@ def main():
                         help="Whether to run training.")
     parser.add_argument("--do_controller_train", action='store_true',
                         help="Whether to run training.")
+    parser.add_argument("--do_augmented", action='store_true',
+                        help="Whether to use text analysis augmentation for controllers.")
     parser.add_argument("--per_gpu_train_batch_size", default=8, type=int,
                         help="Batch size per GPU/CPU for training.")
     parser.add_argument("--per_gpu_eval_batch_size", default=8, type=int,
@@ -492,7 +500,8 @@ def main():
     config = config_class.from_pretrained(args.config_name if args.config_name else args.model_name_or_path,
                                           num_labels=num_labels,
                                           finetuning_task=args.task_name,
-                                          cache_dir=args.cache_dir if args.cache_dir else None)
+                                          cache_dir=args.cache_dir if args.cache_dir else None,
+                                          augmented=5 if args.do_augmented else 0)
     tokenizer = tokenizer_class.from_pretrained(args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
                                                 do_lower_case=args.do_lower_case,
                                                 cache_dir=args.cache_dir if args.cache_dir else None)

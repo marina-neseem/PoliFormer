@@ -557,7 +557,7 @@ def main():
             result = evaluate(args, model, tokenizer, prefix="")
             print_result = get_wanted_result(result)
 
-        train(args, train_dataset, model, tokenizer, train_highway=True)
+        # train(args, train_dataset, model, tokenizer, train_highway=True)
 
 
     # Saving best-practices: if you use defaults names for the model, you can reload it using from_pretrained()
