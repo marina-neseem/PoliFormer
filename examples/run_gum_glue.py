@@ -157,19 +157,23 @@ def train(args, train_dataset, model, tokenizer, do_pretrain_controller_train=Fa
             
             if args.do_controller_train:
                 inputs['do_controller_train'] = True
-        
+
+            if args.do_pretrain_model:
+                inputs['do_pretrain_model'] = True
+    
             if args.model_type != 'distilbert':
                 inputs['token_type_ids'] = batch[2] if args.model_type in ['bert', 'xlnet'] else None  # XLM, DistilBERT and RoBERTa don't use segment_ids
             
             outputs = model(**inputs)
 
             loss1 = outputs[0]  # model outputs are always tuple in transformers (see doc)
-            loss = loss1
             loss2 = 0
             
             if args.do_controller_train:
-                loss2 = outputs[1]*args.efficiency_weight
-                loss = loss1 + loss2
+                loss2 = outputs[1]
+                loss = loss1 + loss2*args.efficiency_weight
+            else:
+                loss = loss1
 
             if args.n_gpu > 1:
                 loss = loss.mean() # mean() to average on multi-gpu parallel training
@@ -265,6 +269,9 @@ def evaluate(args, model, tokenizer, prefix=""):
                 inputs = {'input_ids':      batch[0],
                           'attention_mask': batch[1],
                           'labels':         batch[3]}
+
+                if args.do_pretrain_model:
+                    inputs['do_pretrain_model'] = True
                 if args.model_type != 'distilbert':
                     inputs['token_type_ids'] = batch[2] if args.model_type in ['bert', 'xlnet'] else None  # XLM, DistilBERT and RoBERTa don't use segment_ids
                 outputs = model(**inputs)
@@ -387,6 +394,8 @@ def main():
     parser.add_argument("--do_lower_case", action='store_true',
                         help="Set this flag if you are using an uncased model.")
     parser.add_argument("--do_pretrain_controller_train", action='store_true',
+                        help="Whether to run training.")
+    parser.add_argument("--do_pretrain_model", action='store_true',
                         help="Whether to run training.")
     parser.add_argument("--do_controller_train", action='store_true',
                         help="Whether to run training.")
@@ -518,7 +527,7 @@ def main():
         train_dataset = load_and_cache_examples(args, args.task_name, tokenizer, evaluate=False)
         global_step, tr_loss = train(args, train_dataset, model, tokenizer)
         logger.info(" global_step = %s, average loss = %s", global_step, tr_loss)
-
+    
     if args.do_pretrain_controller_train:
         for n, p in model.named_parameters():
             p.requires_grad = False
