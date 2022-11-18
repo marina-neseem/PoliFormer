@@ -5,7 +5,7 @@ PATH_TO_DATA=/home/marina/REPOS/data/glue_data
 
 MODEL_TYPE=bert  # bert or roberta
 MODEL_SIZE=base  # base or large
-DATASET=RTE  # SST-2, MRPC, RTE, QNLI, QQP, or MNLI
+DATASET=$1  # SST-2, MRPC, RTE, QNLI, QQP, or MNLI
 
 MODEL_NAME=${MODEL_TYPE}-${MODEL_SIZE}
 EPOCHS=10
