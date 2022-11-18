@@ -22,8 +22,6 @@ python -um examples.run_gum_glue \
   --task_name $DATASET \
   --do_train \
   --do_pretrain_model \
-  --target_compute $TARGET \
-  --efficiency_weight $WEIGHT \
   --do_eval \
   --do_lower_case \
   --data_dir $PATH_TO_DATA/$DATASET \
