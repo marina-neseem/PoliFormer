@@ -19,7 +19,7 @@ python -um examples.run_gum_glue \
   --model_type $MODEL_TYPE \
   --model_name_or_path $MODEL_NAME \
   --task_name $DATASET \
-  --pretrained_model ./saved_models/${MODEL_TYPE}-${MODEL_SIZE}/$DATASET/two_stage \
+  --pretrained_model ./saved_models/${MODEL_TYPE}-${MODEL_SIZE}/$DATASET/ada_pretrain \
   --do_pretrain_controller_train \
   --do_eval \
   --do_lower_case \

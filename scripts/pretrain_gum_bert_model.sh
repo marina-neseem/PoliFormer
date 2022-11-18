@@ -15,19 +15,13 @@ then
   MODEL_NAME=${MODEL_NAME}-uncased
 fi
 
-WEIGHTS="0.05 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1 1.5"
-TARGETS="0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1"
-
-for WEIGHT in $WEIGHTS ; do
-for TARGET in $TARGETS ; do
 
 python -um examples.run_gum_glue \
   --model_type $MODEL_TYPE \
   --model_name_or_path $MODEL_NAME \
   --task_name $DATASET \
-  --pretrained_model ./saved_models/${MODEL_TYPE}-${MODEL_SIZE}/$DATASET/ada_controller \
   --do_train \
-  --do_controller_train \
+  --do_pretrain_model \
   --target_compute $TARGET \
   --efficiency_weight $WEIGHT \
   --do_eval \
@@ -40,8 +34,6 @@ python -um examples.run_gum_glue \
   --num_train_epochs $EPOCHS \
   --save_steps 0 \
   --seed 42 \
-  --output_dir ./saved_models/${MODEL_TYPE}-${MODEL_SIZE}/$DATASET/ada_weight${WEIGHT}/ada_target${TARGET} \
+  --output_dir ./saved_models/${MODEL_TYPE}-${MODEL_SIZE}/$DATASET/ada_weight${WEIGHT}/ada_pretrain \
   --overwrite_cache \
   --overwrite_output_dir
-done
-done
