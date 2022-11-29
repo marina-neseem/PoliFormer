@@ -36,13 +36,20 @@ class TokensSelect(torch.nn.Module):
         return tokens_mask.bool().unsqueeze(-1), tokens_mask
 
 class BlockSelect(torch.nn.Module):   
-    def __init__(self, num_tokens, embedding_size, num_layers, random=False, random_ratio=1.):
+    def __init__(self, num_tokens, embedding_size, num_layers, random=False, \
+                 random_ratio=1., augmented=0., dim=50):
         super(BlockSelect, self).__init__()
         print(num_tokens, embedding_size, num_layers)
         self.random = random
         self.random_ratio = random_ratio
-        self.mlp = torch.nn.Linear(embedding_size, 100)
-        self.fc = torch.nn.Linear(100*num_tokens, num_layers)
+        # self.mlp = torch.nn.Linear(embedding_size, 100)
+        # self.fc = torch.nn.Linear(100*num_tokens, num_layers)
+        self.num_tokens = num_tokens
+        self.augmented = augmented
+        self.mlp = torch.nn.Linear(embedding_size, dim)
+        if self.augmented > 0:
+            self.fc_aug = torch.nn.Linear(self.augmented, dim*num_tokens)
+        self.fc = torch.nn.Linear(dim*num_tokens if self.augmented == 0 else 2*dim*num_tokens, num_layers)
 
     def unfreeze_controllers(self):
         # Allow training of the block select
@@ -53,10 +60,14 @@ class BlockSelect(torch.nn.Module):
     # Defining the forward pass    
     # Experiments shows that during pretraining controllers hard is better false
     # while during simultaniously training policy network and model, it is better to be true
-    def forward(self, x, hard_gumbel=True):
+    def forward(self, x, hard_gumbel=True, metrics=None):
         b_sz = x.shape[0]
         temp = self.mlp(x)
         temp = temp.view(b_sz, -1)
+        if self.augmented > 0:
+            metrics = self.fc_aug(metrics)
+            temp = torch.cat((temp, metrics), 1)
+
         temp = self.fc(temp)
 
         block_mask = gumbel_sigmoid(temp, hard=hard_gumbel, tau=5)

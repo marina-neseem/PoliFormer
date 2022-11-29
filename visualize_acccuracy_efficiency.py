@@ -1,13 +1,18 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 
-DATASET="CoLA"  # SST-2, MRPC, RTE, QNLI, QQP, or MNLI
+MODEL_TYPE="bert"  # bert or roberta
+MODEL_SIZE="large"  # base or large
+DATASET="RTE"  # SST-2, MRPC, RTE, QNLI, QQP, or MNLI
+
+MODEL_NAME= f"{MODEL_TYPE}-{MODEL_SIZE}"
 
 def flatten(l):
     return [item for sublist in l for item in sublist]
 
 def get_result_idx():
-    if DATASET == "MPRC":
+    if DATASET == "MRPC":
         return 1
     else:
         return 0
@@ -33,16 +38,20 @@ def pareto_frontier(Xs, Ys, maxX = True, maxY = True):
 static = {
     "CoLA": 0.605839001376474,
     "RTE": 0.7148014440433214,
-    "MRPC": 0.8937607204116638
+    "MRPC": 0.8937607204116638,
+    "SST-2": 0.930045871559633
 }
 
 static_accuracy = static[DATASET] 
 
 # Read data
-weights = [0.05, 0.1, 0.3, 0.5, 0.7, 0.9, 1, 1.5]
+weights = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5]
 my_data = []
 for weight in weights:
-    my_data.append(np.genfromtxt(f'saved_models/bert-base/{DATASET}/summary_weight{weight}.csv', delimiter=','))
+    results_file = f"saved_models/{MODEL_NAME}/{DATASET}/summary_weight{weight}.csv"
+    if not os.path.isfile(results_file):
+        continue
+    my_data.append(np.genfromtxt(results_file, delimiter=','))
     
 ref_data = np.genfromtxt(f'deebert_results_{DATASET}.csv', delimiter=',')
 
@@ -72,4 +81,4 @@ plt.title(f"{DATASET}")
 plt.grid()
 plt.legend()
 
-plt.savefig(f"vis_{DATASET}.png")
+plt.savefig(f"vis_{DATASET}_{MODEL_NAME}.png")

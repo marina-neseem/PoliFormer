@@ -42,16 +42,16 @@ class GumBertEncoder(BertEncoder):
     def __init__(self, config):
         super(GumBertEncoder, self).__init__(config)
         # TODO: 128 is max_seq_len
-        self.controller = BlockSelect(128, config.hidden_size, config.num_hidden_layers)
+        self.controller = BlockSelect(128, config.hidden_size, config.num_hidden_layers, augmented=config.augmented)
         self.config = config
 
     def forward(self, hidden_states, attention_mask=None, head_mask=None, encoder_hidden_states=None, \
-                encoder_attention_mask=None, return_num_executed_layers=False, adaptive=False, hard_gumbel=True):
+                encoder_attention_mask=None, return_num_executed_layers=False, adaptive=False, hard_gumbel=True, metrics=None):
         all_hidden_states = ()
         all_attentions = ()
 
         temp = hidden_states.clone()
-        choices = self.controller(temp, hard_gumbel=hard_gumbel)
+        choices = self.controller(temp, hard_gumbel=hard_gumbel, metrics=metrics)
         for i, layer_module in enumerate(self.layer):
             if adaptive:
                 if not self.training:
@@ -108,7 +108,7 @@ class GumBertModel(BertModel):
 
     def forward(self, input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None,
                 head_mask=None, inputs_embeds=None, encoder_hidden_states=None, encoder_attention_mask=None,
-                return_num_executed_layers=False, hard_gumbel=True, adaptive=True):
+                return_num_executed_layers=False, hard_gumbel=True, adaptive=True, metrics=None):
         if input_ids is not None and inputs_embeds is not None:
             raise ValueError("You cannot specify both input_ids and inputs_embeds at the same time")
         elif input_ids is not None:
@@ -184,7 +184,8 @@ class GumBertModel(BertModel):
                                        encoder_hidden_states=encoder_hidden_states,
                                        encoder_attention_mask=encoder_extended_attention_mask,
                                        return_num_executed_layers=return_num_executed_layers,
-                                       hard_gumbel=hard_gumbel, adaptive=adaptive)
+                                       hard_gumbel=hard_gumbel, adaptive=adaptive,
+                                       metrics=metrics)
         if return_num_executed_layers:
             encoder_outputs, num_activated_layers = encoder_outputs
         sequence_output = encoder_outputs[0]
@@ -206,7 +207,7 @@ class GumBertForSequenceClassification(BertForSequenceClassification):
     def forward(self, input_ids=None, attention_mask=None, token_type_ids=None,
                 position_ids=None, head_mask=None, inputs_embeds=None, labels=None,
                 do_pretrain_controller_train=False, do_controller_train=False, 
-                do_pretrain_model=False, target_compute=1.0):
+                do_pretrain_model=False, target_compute=1.0, metrics=None):
         
         if do_pretrain_controller_train and do_controller_train:
             assert("Both do_controller_train and do_pretrain_controller_train are set True, choose where you stand and rerun")
@@ -233,7 +234,8 @@ class GumBertForSequenceClassification(BertForSequenceClassification):
                             inputs_embeds=inputs_embeds,
                             return_num_executed_layers=True,
                             hard_gumbel=hard_gumbel,
-                            adaptive=adaptive)
+                            adaptive=adaptive,
+                            metrics=metrics)
 
         pooled_output = outputs[1]
 

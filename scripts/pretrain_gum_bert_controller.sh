@@ -1,7 +1,8 @@
 #!/bin/bash
 export CUDA_VISIBLE_DEVICES=0
+export CUBLAS_WORKSPACE_CONFIG=:4096:8
 
-PATH_TO_DATA=/home/marina/REPOS/data/glue_data
+PATH_TO_DATA=../data/glue_data
 
 MODEL_TYPE=bert  # bert or roberta
 MODEL_SIZE=base  # base or large
@@ -33,4 +34,5 @@ python -um examples.run_gum_glue \
   --seed 42 \
   --output_dir ./saved_models/${MODEL_TYPE}-${MODEL_SIZE}/$DATASET/ada_controller \
   --overwrite_cache \
+  --cache_dir .cache \
   --overwrite_output_dir
