@@ -37,7 +37,7 @@ class TokensSelect(torch.nn.Module):
 
 class BlockSelect(torch.nn.Module):   
     def __init__(self, num_tokens, embedding_size, num_layers, random=False, \
-                 random_ratio=1., augmented=0., dim=50):
+                 random_ratio=1., augmented=0., dim=100):
         super(BlockSelect, self).__init__()
         print(num_tokens, embedding_size, num_layers)
         self.random = random

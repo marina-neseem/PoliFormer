@@ -16,6 +16,11 @@ then
   MODEL_NAME=${MODEL_NAME}-uncased
 fi
 
+if [ $DATASET = 'RTE' ]
+then
+  EPOCHS=5
+  MODEL_NAME=${MODEL_NAME}-uncased
+fi
 
 python -um examples.run_gum_glue \
   --model_type $MODEL_TYPE \

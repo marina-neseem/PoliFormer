@@ -104,7 +104,7 @@ class GumBertModel(BertModel):
     def __init__(self, config):
         super(GumBertModel, self).__init__(config)
         self.encoder = GumBertEncoder(config)
-
+        self.init_weights()
 
     def forward(self, input_ids=None, attention_mask=None, token_type_ids=None, position_ids=None,
                 head_mask=None, inputs_embeds=None, encoder_hidden_states=None, encoder_attention_mask=None,
